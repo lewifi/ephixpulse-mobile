@@ -13,6 +13,7 @@ import { DMSans_400Regular, DMSans_500Medium, DMSans_700Bold } from '@expo-googl
 import { BootSplash } from '../components/BootSplash';
 import { prefetchTrending } from '../hooks/useTrending';
 import { colors } from '../theme/colors';
+import { useNotificationObserver } from '../hooks/useNotificationObserver';
 
 SplashScreen.preventAutoHideAsync().catch(() => {});
 
@@ -34,6 +35,7 @@ const persister = createAsyncStoragePersister({ storage: AsyncStorage, key: 'pul
 const MIN_SPLASH_MS = 1800;
 
 export default function RootLayout() {
+  useNotificationObserver();
   const [fontsLoaded] = useFonts({
     BebasNeue_400Regular,
     DMSans_400Regular,

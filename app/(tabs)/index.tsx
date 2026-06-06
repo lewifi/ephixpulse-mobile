@@ -12,6 +12,7 @@ import { NotifyModal } from '../../components/NotifyModal';
 import { Loading, ErrorState, EmptyState } from '../../components/StateViews';
 import { titleOf, mediaType } from '../../lib/tmdb';
 import { colors, fonts } from '../../theme/colors';
+import { NewInTop25Rail } from '../../components/NewInTop25Rail';
 
 const COLS = 3;
 
@@ -98,6 +99,7 @@ export default function Pulse() {
         )}
       </View>
 
+      {!query.trim() && <NewInTop25Rail />}
       <FlashList
         data={items}
         numColumns={COLS}

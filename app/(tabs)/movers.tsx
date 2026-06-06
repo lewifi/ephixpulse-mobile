@@ -8,15 +8,25 @@ import { MoverRow } from '../../components/MoverRow';
 import { Loading, ErrorState, EmptyState } from '../../components/StateViews';
 import { colors, fonts } from '../../theme/colors';
 
+function relTime(iso?: string): string {
+  if (!iso) return '';
+  const mins = Math.round((Date.now() - new Date(iso).getTime()) / 60000);
+  if (mins < 1) return 'just now';
+  if (mins < 60) return `${mins}m ago`;
+  const hrs = Math.round(mins / 60);
+  if (hrs < 24) return `${hrs}h ago`;
+  return `${Math.round(hrs / 24)}d ago`;
+}
+
 export default function Movers() {
   const insets = useSafeAreaInsets();
   const [win, setWin] = useState<'24h' | '7d'>('24h');
   const { data, isLoading, isError, error, refetch } = useMovers(win);
-  const movers = data?.movers ?? [];
-  const reason = data?.reason as string | undefined;
   const { data: trending } = useTrending();
 
-  // Join posters from the trending pool by `${media_type}_${id}`.
+  const movers = data?.movers ?? [];
+  const reason = data?.reason as string | undefined;
+
   const posterMap = useMemo(() => {
     const m: Record<string, string | undefined> = {};
     [...(trending?.released ?? []), ...(trending?.upcoming ?? [])].forEach((i: any) => {
@@ -27,7 +37,11 @@ export default function Movers() {
 
   return (
     <View style={[s.root, { paddingTop: insets.top }]}>
-      <Text style={s.title}>Biggest Movers</Text>
+      <View style={s.header}>
+        <Text style={s.title}>Biggest Movers</Text>
+        {data?.current_at ? <Text style={s.asOf}>as of {relTime(data.current_at)}</Text> : null}
+      </View>
+
       <View style={s.toggle}>
         {(['24h', '7d'] as const).map((w) => (
           <Pressable key={w} onPress={() => setWin(w)} style={[s.seg, win === w && s.segActive]}>
@@ -47,7 +61,7 @@ export default function Movers() {
           renderItem={({ item }: any) => (
             <MoverRow mover={item} posterPath={posterMap[`${item.media_type}_${item.tmdb_id}`]} />
           )}
-          contentContainerStyle={{ paddingBottom: insets.bottom + 24, paddingTop: 4 }}
+          contentContainerStyle={{ paddingBottom: insets.bottom + 24 }}
           ListEmptyComponent={
             <EmptyState
               title="No movers yet"
@@ -68,7 +82,9 @@ export default function Movers() {
 
 const s = StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.bg },
-  title: { fontFamily: fonts.display, fontSize: 30, color: colors.text, paddingHorizontal: 16, paddingTop: 12, letterSpacing: 1 },
+  header: { flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between', paddingHorizontal: 16, paddingTop: 12 },
+  title: { fontFamily: fonts.display, fontSize: 30, color: colors.text, letterSpacing: 1 },
+  asOf: { color: colors.faint, fontFamily: fonts.body, fontSize: 11 },
   toggle: { flexDirection: 'row', gap: 8, paddingHorizontal: 16, paddingVertical: 12 },
   seg: { paddingHorizontal: 16, paddingVertical: 7, backgroundColor: colors.surface, borderColor: colors.border, borderWidth: 1 },
   segActive: { backgroundColor: colors.accent, borderColor: colors.accent },

@@ -1,4 +1,4 @@
-export const APP_VERSION = '1.0.0';
+export const APP_VERSION = '1.0.0';   // was '1.0.0'
 
 export type Release = { version: string; date: string; notes: string[] };
 

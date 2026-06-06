@@ -14,3 +14,9 @@ ephixpulse-firebase-adminsdk-fbsvc-802bf56ac4.json
 *-firebase-adminsdk-*.json
 
 google-services.json
+
+# wrangler files
+.wrangler
+.dev.vars*
+!.dev.vars.example
+!.env.example
