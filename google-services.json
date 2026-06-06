@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "321199550832",
+    "project_id": "ephixpulse",
+    "storage_bucket": "ephixpulse.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:321199550832:android:281ca5d6676d980e3c9fb5",
+        "android_client_info": {
+          "package_name": "net.ephix.pulse"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDFSDxsepCCNoYler-S4nkVUzCei0GVv8g"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

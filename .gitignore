@@ -1,0 +1,14 @@
+node_modules/
+.expo/
+dist/
+google-services.json
+.env
+*.apk
+ios/
+android/
+# Firebase admin/service-account keys
+*-firebase-adminsdk-*.json
+ephixpulse-firebase-adminsdk-fbsvc-802bf56ac4.json
+
+# Firebase service-account / admin keys (NEVER commit)
+*-firebase-adminsdk-*.json
