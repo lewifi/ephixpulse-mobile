@@ -12,3 +12,5 @@ ephixpulse-firebase-adminsdk-fbsvc-802bf56ac4.json
 
 # Firebase service-account / admin keys (NEVER commit)
 *-firebase-adminsdk-*.json
+
+google-services.json
