@@ -21,7 +21,14 @@ SplashScreen.preventAutoHideAsync().catch(() => {});
 // The window behind the React root defaults to white on Android. Every RN surface
 // here is dark, so without this a white frame shows through during the splash
 // handoff and on any moment nothing is mounted.
-SystemUI.setBackgroundColorAsync(colors.bg).catch(() => {});
+//
+// try/catch, not just .catch: this is the one native module no shipped build has
+// exercised yet. If an installed binary predates it the call throws synchronously,
+// and an uncaught throw at module scope would crash the app on launch — which over
+// OTA means bricked until reinstall. Cosmetic fix; never worth that risk.
+try {
+  SystemUI.setBackgroundColorAsync(colors.bg).catch(() => {});
+} catch {}
 
 const queryClient = new QueryClient({
   defaultOptions: {
