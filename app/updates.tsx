@@ -5,6 +5,7 @@ import { Ionicons } from '@expo/vector-icons';
 import * as WebBrowser from 'expo-web-browser';
 import { CHANGELOG, APP_VERSION } from '../lib/changelog';
 import { PulseWordmark } from '../components/PulseWordmark';
+import { TmdbAttribution, SourceCredits } from '../components/TmdbAttribution';
 import { colors, fonts } from '../theme/colors';
 
 export default function Updates() {
@@ -40,6 +41,11 @@ export default function Updates() {
             <Text style={s.credit}>Made by Lewi 2026 ↗</Text>
           </Pressable>
         </View>
+
+        <View style={s.attribution}>
+          <TmdbAttribution />
+          <SourceCredits />
+        </View>
       </ScrollView>
     </View>
   );
@@ -58,4 +64,5 @@ const s = StyleSheet.create({
   footer: { alignItems: 'center', marginTop: 16, paddingTop: 24, borderTopColor: colors.border, borderTopWidth: 1, gap: 8 },
   tag: { color: colors.faint, fontFamily: fonts.body, fontSize: 12 },
   credit: { color: colors.accent, fontFamily: fonts.medium, fontSize: 14, marginTop: 4 },
+  attribution: { alignItems: 'center', marginTop: 24, paddingTop: 20, borderTopColor: colors.border, borderTopWidth: 1 },
 });
