@@ -10,10 +10,12 @@ const word = require('../assets/splash-icon.png');
 
 export function BootSplash({ visible, onHidden }: { visible: boolean; onHidden: () => void }) {
   const pulse = useSharedValue(0);
-  const fade = useSharedValue(0); // start hidden, fade IN over the native splash (no hard swap)
+  // Start fully opaque. Fading in meant this sat transparent for ~320ms while the
+  // native splash had already been torn down, showing the bare window (white)
+  // underneath. Both backgrounds are colors.bg, so a hard swap is invisible anyway.
+  const fade = useSharedValue(1);
 
   useEffect(() => {
-    fade.value = withTiming(1, { duration: 320, easing: Easing.out(Easing.ease) });
     pulse.value = withRepeat(
       withTiming(1, { duration: 1600, easing: Easing.inOut(Easing.ease) }),
       -1,

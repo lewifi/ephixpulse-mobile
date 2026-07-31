@@ -86,6 +86,10 @@ export function ControlsMenu({ visible, media, sort, onClose, onMedia, onSort, o
               <Text style={s.footCredit}>Made by Lewi ↗</Text>
             </Pressable>
           </View>
+
+          <Pressable onPress={() => { WebBrowser.openBrowserAsync('https://ephix.net/privacy'); onClose(); }} hitSlop={6}>
+            <Text style={s.privacyLink}>Privacy Policy ↗</Text>
+          </Pressable>
         </Pressable>
       </Pressable>
     </Modal>
@@ -109,4 +113,5 @@ const s = StyleSheet.create({
   foot: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 18, paddingTop: 14, borderTopColor: colors.border, borderTopWidth: 1 },
   footLink: { color: colors.muted, fontFamily: fonts.medium, fontSize: 12 },
   footCredit: { color: colors.accent, fontFamily: fonts.medium, fontSize: 12 },
+  privacyLink: { color: colors.faint, fontFamily: fonts.medium, fontSize: 11, textAlign: 'center', marginTop: 12 },
 });

@@ -7,6 +7,7 @@ import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client
 import { createAsyncStoragePersister } from '@tanstack/query-async-storage-persister';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as SplashScreen from 'expo-splash-screen';
+import * as SystemUI from 'expo-system-ui';
 import { useFonts } from 'expo-font';
 import { BebasNeue_400Regular } from '@expo-google-fonts/bebas-neue';
 import { DMSans_400Regular, DMSans_500Medium, DMSans_700Bold } from '@expo-google-fonts/dm-sans';
@@ -16,6 +17,11 @@ import { colors } from '../theme/colors';
 import { useNotificationObserver } from '../hooks/useNotificationObserver';
 
 SplashScreen.preventAutoHideAsync().catch(() => {});
+
+// The window behind the React root defaults to white on Android. Every RN surface
+// here is dark, so without this a white frame shows through during the splash
+// handoff and on any moment nothing is mounted.
+SystemUI.setBackgroundColorAsync(colors.bg).catch(() => {});
 
 const queryClient = new QueryClient({
   defaultOptions: {
