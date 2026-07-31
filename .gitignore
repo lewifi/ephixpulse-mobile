@@ -1,22 +1,27 @@
 node_modules/
 .expo/
 dist/
-google-services.json
-.env
-*.apk
 ios/
 android/
-# Firebase admin/service-account keys
-*-firebase-adminsdk-*.json
-ephixpulse-firebase-adminsdk-fbsvc-802bf56ac4.json
 
-# Firebase service-account / admin keys (NEVER commit)
-*-firebase-adminsdk-*.json
+# signing keys — NEVER commit. Android signing keys are permanent once Play
+# binds them; a leaked one cannot be rotated after the first upload.
+*.jks
+*.keystore
 
+# Firebase service-account / admin keys — NEVER commit
+*-firebase-adminsdk-*.json
 google-services.json
 
-# wrangler files
-.wrangler
+# secrets
+.env
 .dev.vars*
 !.dev.vars.example
 !.env.example
+
+# build artifacts
+*.apk
+*.aab
+
+# wrangler
+.wrangler/
