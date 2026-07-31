@@ -25,3 +25,8 @@ google-services.json
 
 # wrangler
 .wrangler/
+
+# npm lockfile — this project uses pnpm. EAS Build infers the package manager
+# from the lockfile, so two of them let the cloud build resolve a different
+# dependency tree than the local one.
+package-lock.json

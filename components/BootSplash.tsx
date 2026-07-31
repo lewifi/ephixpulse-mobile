@@ -51,7 +51,13 @@ export function BootSplash({ visible, onHidden }: { visible: boolean; onHidden: 
 
 const s = StyleSheet.create({
   fill: {
-    ...StyleSheet.absoluteFillObject,
+    // Written out rather than spreading StyleSheet.absoluteFillObject: identical
+    // at runtime, but current RN types no longer declare that property.
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
     backgroundColor: colors.bg,
     alignItems: 'center',
     justifyContent: 'center',
