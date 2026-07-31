@@ -45,6 +45,9 @@ export default function Updates() {
         <View style={s.attribution}>
           <TmdbAttribution />
           <SourceCredits />
+          <Pressable onPress={() => WebBrowser.openBrowserAsync('https://ephix.net/privacy')} hitSlop={8}>
+            <Text style={s.privacy}>Privacy Policy ↗</Text>
+          </Pressable>
         </View>
       </ScrollView>
     </View>
@@ -65,4 +68,5 @@ const s = StyleSheet.create({
   tag: { color: colors.faint, fontFamily: fonts.body, fontSize: 12 },
   credit: { color: colors.accent, fontFamily: fonts.medium, fontSize: 14, marginTop: 4 },
   attribution: { alignItems: 'center', marginTop: 24, paddingTop: 20, borderTopColor: colors.border, borderTopWidth: 1 },
+  privacy: { color: colors.muted, fontFamily: fonts.medium, fontSize: 12, marginTop: 18 },
 });
