@@ -18,7 +18,8 @@
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#0d1520"
-      }
+      },
+      "permissions": ["com.google.android.gms.permission.AD_ID"]
     },
     "web": {
       "bundler": "metro",
@@ -43,7 +44,19 @@
           "icon": "./assets/notification-icon.png",
           "color": "#2196F3"
         }
-      ]
+      ],
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "enableMinifyInReleaseBuilds": true,
+            "enableShrinkResourcesInReleaseBuilds": true,
+            "extraProguardRules": "-keep class expo.modules.constants.** { *; }\n-keep class expo.modules.device.** { *; }\n-keep class expo.modules.notifications.** { *; }\n-keep class io.invertase.firebase.** { *; }\n-keep class com.google.firebase.** { *; }\n-keep class com.google.android.gms.** { *; }\n-dontwarn com.google.android.gms.**"
+          }
+        }
+      ],
+      "@react-native-firebase/app",
+      "@react-native-firebase/analytics"
     ],
     "experiments": {
       "typedRoutes": true

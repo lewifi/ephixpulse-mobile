@@ -50,6 +50,16 @@ export function NotifyModal({ visible, onClose }: { visible: boolean; onClose: (
               Push needs the installed app — it doesn't run in Expo Go. It'll work once you build
               with EAS.
             </Text>
+          ) : status === 'error' ? (
+            <>
+              <Text style={s.note}>
+                Something went wrong registering for push notifications. This is usually a temporary
+                issue — try again in a moment.
+              </Text>
+              <Pressable style={[s.cta, { marginTop: 12 }]} onPress={enable} disabled={busy}>
+                {busy ? <ActivityIndicator color="#fff" /> : <Text style={s.ctaText}>Try again</Text>}
+              </Pressable>
+            </>
           ) : (
             <Pressable style={s.cta} onPress={enable} disabled={busy}>
               {busy ? <ActivityIndicator color="#fff" /> : <Text style={s.ctaText}>Enable notifications</Text>}

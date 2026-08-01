@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { Stack } from 'expo-router';
+import { Stack, usePathname } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { QueryClient } from '@tanstack/react-query';
@@ -15,6 +15,7 @@ import { BootSplash } from '../components/BootSplash';
 import { prefetchTrending } from '../hooks/useTrending';
 import { colors } from '../theme/colors';
 import { useNotificationObserver } from '../hooks/useNotificationObserver';
+import { logScreenView } from '../lib/analytics';
 
 SplashScreen.preventAutoHideAsync().catch(() => {});
 
@@ -49,6 +50,11 @@ const MIN_SPLASH_MS = 1800;
 
 export default function RootLayout() {
   useNotificationObserver();
+  const pathname = usePathname();
+  useEffect(() => {
+    logScreenView(pathname);
+  }, [pathname]);
+
   const [fontsLoaded] = useFonts({
     BebasNeue_400Regular,
     DMSans_400Regular,
