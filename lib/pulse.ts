@@ -259,16 +259,35 @@ export function pickTrailer(detail: any): any | null {
   return yt[0];
 }
 
-// Flag titles that newly entered the top 25 since the last successful load (device-local).
-// Mirrors the website's detectNewEntries: remembers the previous top-N and diffs it.
+const LAST_NEW_KEY = 'pulse_last_new25';
+
+// Flag titles that newly entered the top 25 since the last baseline.
+// Retains the most recent breakout titles until a newer set of breakouts arrives.
 async function markNewEntries(released: any[]): Promise<void> {
   const top = released.slice(0, NEW_ENTRY_THRESHOLD);
   const idOf = (i: any) => `${i.media_type || (i.name ? 'tv' : 'movie')}_${i.id}`;
   const currentIds = top.map(idOf);
+
   let prev: string[] = [];
   try { prev = JSON.parse((await AsyncStorage.getItem(PREV_TOP_KEY)) || '[]'); } catch {}
+
+  let lastNewIds: string[] = [];
+  try { lastNewIds = JSON.parse((await AsyncStorage.getItem(LAST_NEW_KEY)) || '[]'); } catch {}
+
   const hadBaseline = prev.length > 0;
-  top.forEach((i) => { if (hadBaseline && !prev.includes(idOf(i))) i._isNew = true; });
+  const brandNew = top.filter((i) => hadBaseline && !prev.includes(idOf(i)));
+
+  if (brandNew.length > 0) {
+    lastNewIds = brandNew.map(idOf);
+    try { await AsyncStorage.setItem(LAST_NEW_KEY, JSON.stringify(lastNewIds)); } catch {}
+  }
+
+  top.forEach((i) => {
+    if (lastNewIds.includes(idOf(i))) {
+      i._isNew = true;
+    }
+  });
+
   try { await AsyncStorage.setItem(PREV_TOP_KEY, JSON.stringify(currentIds)); } catch {}
 }
 

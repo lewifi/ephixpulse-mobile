@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { getWatchlist, setWatchlist, WatchEntry } from '../lib/storage';
+import { getSyncState, pullSyncItems, pushSyncItems } from '../lib/sync';
 import { titleOf, mediaType } from '../lib/tmdb';
 
 export function useWatchlist() {
@@ -7,12 +8,26 @@ export function useWatchlist() {
   const [loaded, setLoaded] = useState(false);
 
   useEffect(() => {
-    getWatchlist().then((l) => { setList(l); setLoaded(true); });
+    getWatchlist().then(async (l) => {
+      setList(l);
+      setLoaded(true);
+      const syncState = await getSyncState();
+      if (syncState.code) {
+        pullSyncItems(syncState.code)
+          .then(({ items }) => setList(items))
+          .catch(() => {});
+      }
+    });
   }, []);
 
   const persist = useCallback((next: WatchEntry[]) => {
     setList(next);
     setWatchlist(next);
+    getSyncState().then((syncState) => {
+      if (syncState.code) {
+        pushSyncItems(syncState.code, next, syncState.updatedAt).catch(() => {});
+      }
+    });
   }, []);
 
   const has = useCallback(

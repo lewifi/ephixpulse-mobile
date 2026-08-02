@@ -17,5 +17,6 @@ export function yearOf(item: any): string {
 }
 
 export function mediaType(item: any): 'movie' | 'tv' {
-  return item.media_type === 'tv' || item.name ? 'tv' : 'movie';
+  if (item?.type === 'tv' || item?.type === 'movie') return item.type;
+  return item?.media_type === 'tv' || item?.name ? 'tv' : 'movie';
 }

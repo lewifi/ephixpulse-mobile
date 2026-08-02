@@ -12,7 +12,7 @@ import { NotifyModal } from '../../components/NotifyModal';
 import { Loading, ErrorState, EmptyState } from '../../components/StateViews';
 import { titleOf, mediaType } from '../../lib/tmdb';
 import { colors, fonts } from '../../theme/colors';
-import { NewInTop25Rail } from '../../components/NewInTop25Rail';
+import { NewInTop25Modal } from '../../components/NewInTop25Modal';
 
 const COLS = 3;
 
@@ -28,6 +28,11 @@ export default function Pulse() {
   const [query, setQuery] = useState('');
   const [menu, setMenu] = useState(false);
   const [notify, setNotify] = useState(false);
+  const [showNewTop25, setShowNewTop25] = useState(false);
+
+  const freshCount = useMemo(() => {
+    return (data?.released ?? []).filter((i: any) => i._isNew).length;
+  }, [data]);
 
   const items = useMemo(() => {
     const released = data?.released ?? [];
@@ -62,6 +67,12 @@ export default function Pulse() {
       <View style={s.header}>
         <PulseWordmark size={26} />
         <View style={s.headerIcons}>
+          {freshCount > 0 && (
+            <Pressable onPress={() => setShowNewTop25(true)} hitSlop={8} style={s.flameBadgeBtn}>
+              <Ionicons name="flame" size={16} color={colors.accent} />
+              <Text style={s.flameBadgeText}>{freshCount}</Text>
+            </Pressable>
+          )}
           <Pressable onPress={() => setNotify(true)} hitSlop={10} style={s.menuBtn}>
             <Ionicons name="notifications-outline" size={22} color={colors.muted} />
           </Pressable>
@@ -99,7 +110,6 @@ export default function Pulse() {
         )}
       </View>
 
-      {!query.trim() && <NewInTop25Rail />}
       <FlashList
         data={items}
         numColumns={COLS}
@@ -123,6 +133,7 @@ export default function Pulse() {
       />
 
       <NotifyModal visible={notify} onClose={() => setNotify(false)} />
+      <NewInTop25Modal visible={showNewTop25} onClose={() => setShowNewTop25(false)} />
     </View>
   );
 }
@@ -132,6 +143,8 @@ const s = StyleSheet.create({
   header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingTop: 8, paddingBottom: 10 },
   headerIcons: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   menuBtn: { padding: 4 },
+  flameBadgeBtn: { flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: colors.accentSoft, borderColor: colors.accent, borderWidth: 1, paddingHorizontal: 8, paddingVertical: 3, borderRadius: 12, marginRight: 4 },
+  flameBadgeText: { color: colors.accent, fontFamily: fonts.bold, fontSize: 12 },
   searchWrap: { flexDirection: 'row', alignItems: 'center', gap: 8, marginHorizontal: 16, marginBottom: 10, paddingHorizontal: 12, height: 40, backgroundColor: colors.surface, borderColor: colors.border, borderWidth: 1 },
   search: { flex: 1, color: colors.text, fontFamily: fonts.body, fontSize: 14, paddingVertical: 0 },
   sectionRow: { flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between', paddingHorizontal: 16, paddingTop: 4, paddingBottom: 6 },
