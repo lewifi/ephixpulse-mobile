@@ -1,3 +1,4 @@
+import Constants from 'expo-constants';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Notifications from 'expo-notifications';
 import { WatchEntry, getWatchlist, setWatchlist } from './storage';
@@ -54,8 +55,10 @@ export function mergeWatchlists(local: WatchEntry[], remote: WatchEntry[]): Watc
 
 async function getDeviceToken(): Promise<string | undefined> {
   try {
-    const res = await Notifications.getDevicePushTokenAsync();
-    return res.data as string;
+    const projectId =
+      Constants.expoConfig?.extra?.eas?.projectId ?? Constants.easConfig?.projectId;
+    const res = await Notifications.getExpoPushTokenAsync(projectId ? { projectId } : undefined);
+    return res.data;
   } catch {
     return undefined;
   }
@@ -96,6 +99,9 @@ export async function createSyncCode(currentItems: WatchEntry[]): Promise<string
 
 // 2. Pull server list
 export async function pullSyncItems(code: string): Promise<{ items: WatchEntry[]; updatedAt: string }> {
+  const localBefore = await getWatchlist();
+  const localBeforeStr = JSON.stringify(localBefore);
+
   const { ok, status, json } = await safeFetchJson(`${API_BASE}/api/sync/pull`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -114,8 +120,21 @@ export async function pullSyncItems(code: string): Promise<{ items: WatchEntry[]
   const items = (json.items || []) as WatchEntry[];
   const updatedAt = json.updated_at as string;
 
-  await setWatchlist(items);
-  await setSyncState(code, updatedAt);
+  console.log("MOBILE PULLED items:", items.map(i => i.id));
+
+  const localAfter = await getWatchlist();
+  const localAfterStr = JSON.stringify(localAfter);
+
+  if (localBeforeStr === localAfterStr) {
+    await setWatchlist(items);
+    await setSyncState(code, updatedAt);
+  } else {
+    const merged = mergeWatchlists(localAfter, items);
+    await setWatchlist(merged);
+    const syncState = await getSyncState();
+    pushSyncItems(code, merged, syncState.updatedAt).catch(() => {});
+  }
+
   return { items, updatedAt };
 }
 
@@ -125,6 +144,7 @@ export async function pushSyncItems(
   items: WatchEntry[],
   baseUpdatedAt?: string | null
 ): Promise<string> {
+  console.log("MOBILE PUSHING items:", items.map(i => i.id));
   const { ok, status, json } = await safeFetchJson(`${API_BASE}/api/sync/push`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },

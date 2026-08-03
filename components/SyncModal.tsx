@@ -7,10 +7,9 @@ import {
   Pressable,
   ActivityIndicator,
   StyleSheet,
-  Alert,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { getSyncState, createSyncCode, joinSyncCode, setSyncState, SyncState } from '../lib/sync';
+import { getSyncState, createSyncCode, joinSyncCode, setSyncState, SyncState, pullSyncItems } from '../lib/sync';
 import { WatchEntry } from '../lib/storage';
 import { colors, fonts } from '../theme/colors';
 
@@ -26,25 +25,56 @@ export function SyncModal({ visible, onClose, list, onRefreshList }: Props) {
   const [mode, setMode] = useState<'view' | 'input'>('view');
   const [inputCode, setInputCode] = useState('');
   const [busy, setBusy] = useState(false);
-  const [pendingJoin, setPendingJoin] = useState(false);
+  const [msg, setMsg] = useState<{ text: string; type: 'success' | 'error' | 'info' } | null>(null);
 
   useEffect(() => {
     if (visible) {
       getSyncState().then(setSyncStateLocal);
       setMode('view');
       setInputCode('');
-      setPendingJoin(false);
+      setMsg(null);
     }
   }, [visible]);
 
+  useEffect(() => {
+    if (!visible || !syncState.code || msg?.text === 'Watchlist linked successfully!') return;
+
+    let pollCount = 0;
+    const initialUpdatedAt = syncState.updatedAt;
+
+    const interval = setInterval(async () => {
+      pollCount++;
+      if (pollCount >= 6) { // 30 seconds (6 * 5s)
+        clearInterval(interval);
+        onClose();
+        return;
+      }
+      try {
+        const res = await pullSyncItems(syncState.code);
+        if (res.updatedAt !== initialUpdatedAt) {
+          clearInterval(interval);
+          setSyncStateLocal({ code: syncState.code, updatedAt: res.updatedAt });
+          onRefreshList();
+          setMsg({ text: 'Watchlist linked successfully!', type: 'success' });
+          setTimeout(() => onClose(), 5000);
+        }
+      } catch (e) {
+        // ignore network glitches
+      }
+    }, 5000);
+
+    return () => clearInterval(interval);
+  }, [visible, syncState.code, syncState.updatedAt, onRefreshList, onClose]);
+
   const handleCreateCode = async () => {
     setBusy(true);
+    setMsg(null);
     try {
       const code = await createSyncCode(list);
       setSyncStateLocal({ code, updatedAt: new Date().toISOString() });
-      Alert.alert('Sync Code Created', `Your permanent sync code is ${code}. Type this code on your other devices to sync your list.`);
+      setMsg({ text: 'Sync code generated!', type: 'success' });
     } catch (e: any) {
-      Alert.alert('Error', e?.message || 'Could not create sync code');
+      setMsg({ text: e?.message || 'Could not create sync code', type: 'error' });
     } finally {
       setBusy(false);
     }
@@ -53,24 +83,24 @@ export function SyncModal({ visible, onClose, list, onRefreshList }: Props) {
   const handleJoinCode = async () => {
     const code = inputCode.trim().toUpperCase();
     if (!/^[2-9A-Z]{6}$/.test(code)) {
-      Alert.alert('Invalid Code', 'Please enter a valid 6-character sync code.');
+      setMsg({ text: 'Please enter a valid 6-character sync code.', type: 'error' });
       return;
     }
 
     setBusy(true);
+    setMsg(null);
     try {
       const result = await joinSyncCode(code, list);
       if (result.status === 'approved') {
         setSyncStateLocal({ code, updatedAt: new Date().toISOString() });
         onRefreshList();
-        Alert.alert('Synced!', `Successfully linked to watchlist ${code}.`);
-        onClose();
+        setMsg({ text: 'Watchlist linked successfully!', type: 'success' });
+        setTimeout(() => onClose(), 5000);
       } else {
-        setPendingJoin(true);
-        Alert.alert('Approval Required', 'A join request has been sent to your existing device. Please tap Approve on your linked device.');
+        setMsg({ text: 'Approval request sent! Tap Approve on your other device.', type: 'info' });
       }
     } catch (e: any) {
-      Alert.alert('Error', e?.message || 'Failed to join sync code');
+      setMsg({ text: e?.message || 'Failed to join sync code', type: 'error' });
     } finally {
       setBusy(false);
     }
@@ -79,7 +109,7 @@ export function SyncModal({ visible, onClose, list, onRefreshList }: Props) {
   const handleUnlink = async () => {
     await setSyncState(null, null);
     setSyncStateLocal({ code: null, updatedAt: null });
-    Alert.alert('Unlinked', 'This device has been unlinked. Your local list remains intact.');
+    setMsg({ text: 'Device unlinked. Your local list remains intact.', type: 'info' });
   };
 
   return (
@@ -93,6 +123,17 @@ export function SyncModal({ visible, onClose, list, onRefreshList }: Props) {
           <Text style={s.body}>
             Sync your watchlist across devices anonymously — no account, email, or sign-in required.
           </Text>
+
+          {msg && (
+            <Text style={[
+              s.messageText,
+              msg.type === 'success' && { color: colors.good },
+              msg.type === 'error' && { color: colors.live },
+              msg.type === 'info' && { color: colors.muted }
+            ]}>
+              {msg.text}
+            </Text>
+          )}
 
           {busy ? (
             <ActivityIndicator size="large" color={colors.accent} style={{ marginVertical: 20 }} />
@@ -120,11 +161,6 @@ export function SyncModal({ visible, onClose, list, onRefreshList }: Props) {
                 autoCapitalize="characters"
                 autoCorrect={false}
               />
-              {pendingJoin && (
-                <Text style={s.pendingText}>
-                  Waiting for approval from an existing linked device…
-                </Text>
-              )}
               <Pressable style={s.cta} onPress={handleJoinCode}>
                 <Text style={s.ctaText}>Link to this Code</Text>
               </Pressable>
@@ -163,11 +199,11 @@ const s = StyleSheet.create({
   codeDisplay: { color: colors.accent, fontFamily: fonts.bold, fontSize: 32, letterSpacing: 4, marginVertical: 8 },
   codeInput: { width: '100%', backgroundColor: colors.bg, borderColor: colors.border, borderWidth: 1, color: colors.text, fontFamily: fonts.bold, fontSize: 24, textAlign: 'center', letterSpacing: 4, paddingVertical: 10, marginBottom: 14 },
   note: { color: colors.muted, fontFamily: fonts.body, fontSize: 12, lineHeight: 16, textAlign: 'center', marginBottom: 12 },
-  pendingText: { color: colors.accent, fontFamily: fonts.medium, fontSize: 12, textAlign: 'center', marginBottom: 10 },
   cta: { width: '100%', backgroundColor: colors.accent, paddingVertical: 13, alignItems: 'center' },
   ctaText: { color: '#fff', fontFamily: fonts.bold, fontSize: 14 },
   ghost: { paddingVertical: 8 },
   ghostText: { color: colors.muted, fontFamily: fonts.medium, fontSize: 13 },
   dismiss: { marginTop: 14, paddingVertical: 6 },
   dismissText: { color: colors.faint, fontFamily: fonts.medium, fontSize: 13 },
+  messageText: { fontFamily: fonts.medium, fontSize: 13, textAlign: 'center', marginBottom: 14, paddingHorizontal: 10 },
 });

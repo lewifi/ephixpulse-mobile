@@ -1,10 +1,11 @@
 import { useState, useEffect, useCallback } from 'react';
-import { View, Text, Pressable, StyleSheet } from 'react-native';
+import { View, Text, Pressable, StyleSheet, AppState } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { FlashList } from '@shopify/flash-list';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { usePathname } from 'expo-router';
 import { useWatchlist } from '../../hooks/useWatchlist';
-import { getSyncState } from '../../lib/sync';
+import { getSyncState, pullSyncItems } from '../../lib/sync';
 import { SyncModal } from '../../components/SyncModal';
 import { TitleCard } from '../../components/TitleCard';
 import { EmptyState, Loading } from '../../components/StateViews';
@@ -12,9 +13,12 @@ import { colors, fonts } from '../../theme/colors';
 
 export default function MyList() {
   const insets = useSafeAreaInsets();
-  const { list, loaded, toggle } = useWatchlist();
+  const { list, loaded, toggle, refresh } = useWatchlist();
   const [syncState, setSyncStateLocal] = useState<{ code: string | null; updatedAt: string | null }>({ code: null, updatedAt: null });
   const [showSyncModal, setShowSyncModal] = useState(false);
+
+  const pathname = usePathname();
+  const isFocused = pathname === '/list';
 
   const refreshSync = useCallback(() => {
     getSyncState().then(setSyncStateLocal);
@@ -24,6 +28,34 @@ export default function MyList() {
     refreshSync();
   }, [refreshSync, showSyncModal]);
 
+  useEffect(() => {
+    if (!syncState.code || !isFocused) return;
+
+    let appState = 'active';
+    const sub = AppState.addEventListener('change', (nextState) => {
+      appState = nextState;
+    });
+
+    const interval = setInterval(async () => {
+      if (appState !== 'active') return;
+      try {
+        const current = await getSyncState();
+        if (!current.code) return;
+        const res = await pullSyncItems(current.code);
+        if (res.updatedAt !== current.updatedAt) {
+          refresh();
+        }
+      } catch (e) {
+        // ignore network glitches
+      }
+    }, 10000);
+
+    return () => {
+      clearInterval(interval);
+      sub.remove();
+    };
+  }, [syncState.code, isFocused, refresh]);
+
   return (
     <View style={[s.root, { paddingTop: insets.top }]}>
       <View style={s.headerRow}>
@@ -31,7 +63,7 @@ export default function MyList() {
         <Pressable style={s.syncBadge} onPress={() => setShowSyncModal(true)}>
           <Ionicons name={syncState.code ? "sync-circle" : "sync-circle-outline"} size={16} color={syncState.code ? colors.good : colors.muted} />
           <Text style={s.syncBadgeText}>
-            {syncState.code ? `Synced · ${syncState.code}` : 'Local only'}
+            {syncState.code ? `Synced · ${syncState.code}` : 'Sync to other devices'}
           </Text>
         </Pressable>
       </View>
@@ -53,7 +85,7 @@ export default function MyList() {
         visible={showSyncModal}
         onClose={() => setShowSyncModal(false)}
         list={list}
-        onRefreshList={() => {}}
+        onRefreshList={refresh}
       />
     </View>
   );
