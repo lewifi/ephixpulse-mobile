@@ -128,14 +128,14 @@ export async function pullSyncItems(code: string): Promise<{ items: WatchEntry[]
   if (localBeforeStr === localAfterStr) {
     await setWatchlist(items);
     await setSyncState(code, updatedAt);
+    return { items, updatedAt };
   } else {
     const merged = mergeWatchlists(localAfter, items);
     await setWatchlist(merged);
     const syncState = await getSyncState();
     pushSyncItems(code, merged, syncState.updatedAt).catch(() => {});
+    return { items: merged, updatedAt: syncState.updatedAt || updatedAt };
   }
-
-  return { items, updatedAt };
 }
 
 // 3. Push local list to server
