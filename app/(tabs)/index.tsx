@@ -4,6 +4,8 @@ import { FlashList } from '@shopify/flash-list';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router, useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useQueryClient } from '@tanstack/react-query';
 import { useTrending } from '../../hooks/useTrending';
 import { TitleCard } from '../../components/TitleCard';
 import { PulseWordmark } from '../../components/PulseWordmark';
@@ -22,6 +24,7 @@ const SORT_SCORE: Record<Exclude<SortKey, 'rating' | 'title'>, string> = {
 
 export default function Pulse() {
   const insets = useSafeAreaInsets();
+  const queryClient = useQueryClient();
   const { data, isLoading, isError, error, refetch, isRefetching } = useTrending();
   const [media, setMedia] = useState<MediaFilter>('all');
   const [sort, setSort] = useState<SortKey>('pulse');
@@ -32,9 +35,24 @@ export default function Pulse() {
 
   const params = useLocalSearchParams<{ new25?: string }>();
 
+  const openNewTop25Modal = async () => {
+    setShowNewTop25(true);
+    try {
+      await AsyncStorage.setItem('pulse_last_new25', '[]');
+      queryClient.invalidateQueries({ queryKey: ['trending'] });
+    } catch {}
+  };
+
+  const handleRefresh = async () => {
+    try {
+      await AsyncStorage.setItem('pulse_last_new25', '[]');
+    } catch {}
+    refetch();
+  };
+
   useEffect(() => {
     if (params.new25 === '1') {
-      setShowNewTop25(true);
+      openNewTop25Modal();
       router.setParams({ new25: undefined });
     }
   }, [params.new25]);
@@ -77,7 +95,7 @@ export default function Pulse() {
         <PulseWordmark size={26} />
         <View style={s.headerIcons}>
           {freshCount > 0 && (
-            <Pressable onPress={() => setShowNewTop25(true)} hitSlop={8} style={s.flameBadgeBtn}>
+            <Pressable onPress={openNewTop25Modal} hitSlop={8} style={s.flameBadgeBtn}>
               <Ionicons name="flame" size={16} color={colors.accent} />
               <Text style={s.flameBadgeText}>{freshCount}</Text>
             </Pressable>
@@ -125,7 +143,7 @@ export default function Pulse() {
         keyExtractor={(item: any) => `${mediaType(item)}_${item.id}`}
         renderItem={({ item, index }: any) => <TitleCard item={item} rank={ranked ? index + 1 : undefined} />}
         contentContainerStyle={{ paddingHorizontal: 10, paddingBottom: insets.bottom + 24 }}
-        refreshControl={<RefreshControl refreshing={isRefetching} onRefresh={refetch} tintColor={colors.accent} />}
+        refreshControl={<RefreshControl refreshing={isRefetching} onRefresh={handleRefresh} tintColor={colors.accent} />}
         ListEmptyComponent={<EmptyState title="No matches" sub="Try a different search or filter." />}
       />
 
