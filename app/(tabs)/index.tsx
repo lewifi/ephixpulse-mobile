@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useState } from 'react';
-import { View, Text, TextInput, Pressable, RefreshControl, StyleSheet } from 'react-native';
+import { useEffect, useMemo, useState, useRef } from 'react';
+import { View, Text, TextInput, Pressable, RefreshControl, StyleSheet, Animated } from 'react-native';
 import { FlashList } from '@shopify/flash-list';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router, useLocalSearchParams } from 'expo-router';
@@ -36,6 +36,10 @@ export default function Pulse() {
   const [seenIds, setSeenIds] = useState<string[]>([]);
   const params = useLocalSearchParams<{ new25?: string }>();
 
+  const pulseAnim = useRef(new Animated.Value(1)).current;
+
+
+
   // Load seen IDs on mount
   useEffect(() => {
     (async () => {
@@ -55,6 +59,28 @@ export default function Pulse() {
   const unseenCount = useMemo(() => {
     return lastNewIds.filter((id) => !seenIds.includes(id)).length;
   }, [lastNewIds, seenIds]);
+
+  // Pulsing animation loop for unseen new items
+  useEffect(() => {
+    if (unseenCount > 0) {
+      Animated.loop(
+        Animated.sequence([
+          Animated.timing(pulseAnim, {
+            toValue: 1.05,
+            duration: 1200,
+            useNativeDriver: true,
+          }),
+          Animated.timing(pulseAnim, {
+            toValue: 0.95,
+            duration: 1200,
+            useNativeDriver: true,
+          }),
+        ])
+      ).start();
+    } else {
+      pulseAnim.setValue(1);
+    }
+  }, [unseenCount]);
 
   const markAllAsSeen = async () => {
     if (lastNewIds.length > 0) {
@@ -115,23 +141,25 @@ export default function Pulse() {
         <PulseWordmark size={26} />
         <View style={s.headerIcons}>
           {lastNewIds.length > 0 && (
-            <Pressable
-              onPress={() => setShowNewTop25(true)}
-              hitSlop={8}
-              style={[
-                s.flameBadgeBtn,
-                unseenCount > 0 ? s.flameBadgeBtnUnseen : s.flameBadgeBtnSeen
-              ]}
-            >
-              <Ionicons
-                name="flame"
-                size={16}
-                color={unseenCount > 0 ? colors.accent : colors.muted}
-              />
-              {unseenCount > 0 && (
-                <Text style={s.flameBadgeText}>{unseenCount}</Text>
-              )}
-            </Pressable>
+            <Animated.View style={{ transform: [{ scale: pulseAnim }] }}>
+              <Pressable
+                onPress={() => setShowNewTop25(true)}
+                hitSlop={8}
+                style={[
+                  s.flameBadgeBtn,
+                  unseenCount > 0 ? s.flameBadgeBtnUnseen : s.flameBadgeBtnSeen
+                ]}
+              >
+                <Ionicons
+                  name="flame"
+                  size={16}
+                  color={unseenCount > 0 ? colors.accent : colors.muted}
+                />
+                {unseenCount > 0 && (
+                  <Text style={s.flameBadgeText}>{unseenCount}</Text>
+                )}
+              </Pressable>
+            </Animated.View>
           )}
           <Pressable onPress={() => setNotify(true)} hitSlop={10} style={s.menuBtn}>
             <Ionicons name="notifications-outline" size={22} color={colors.muted} />
@@ -210,7 +238,15 @@ const s = StyleSheet.create({
   headerIcons: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   menuBtn: { padding: 4 },
   flameBadgeBtn: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 8, paddingVertical: 3, borderRadius: 12, marginRight: 4, borderWidth: 1 },
-  flameBadgeBtnUnseen: { backgroundColor: colors.accentSoft, borderColor: colors.accent },
+  flameBadgeBtnUnseen: {
+    backgroundColor: 'rgba(33, 150, 243, 0.25)',
+    borderColor: colors.accent,
+    borderWidth: 1.5,
+    shadowColor: colors.accent,
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.8,
+    shadowRadius: 8,
+  },
   flameBadgeBtnSeen: { backgroundColor: 'transparent', borderColor: colors.border },
   flameBadgeText: { color: colors.accent, fontFamily: fonts.bold, fontSize: 12 },
   searchWrap: { flexDirection: 'row', alignItems: 'center', gap: 8, marginHorizontal: 16, marginBottom: 10, paddingHorizontal: 12, height: 40, backgroundColor: colors.surface, borderColor: colors.border, borderWidth: 1 },
