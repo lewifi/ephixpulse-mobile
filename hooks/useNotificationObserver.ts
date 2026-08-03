@@ -2,10 +2,9 @@ import { useEffect, useRef } from 'react';
 import { AppState } from 'react-native';
 import * as Notifications from 'expo-notifications';
 import { router } from 'expo-router';
-import { useQueryClient } from '@tanstack/react-query';
+import { QueryClient } from '@tanstack/react-query';
 
-export function useNotificationObserver() {
-  const queryClient = useQueryClient();
+export function useNotificationObserver(queryClient: QueryClient) {
   const handled = useRef<string | null>(null);
   useEffect(() => {
     let mounted = true;

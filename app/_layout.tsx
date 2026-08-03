@@ -50,7 +50,7 @@ const persister = createAsyncStoragePersister({ storage: AsyncStorage, key: 'pul
 const MIN_SPLASH_MS = 1800;
 
 export default function RootLayout() {
-  useNotificationObserver();
+  useNotificationObserver(queryClient);
   const pathname = usePathname();
 
   useEffect(() => {
