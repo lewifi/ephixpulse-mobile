@@ -35,14 +35,6 @@ export default function Pulse() {
 
   const params = useLocalSearchParams<{ new25?: string }>();
 
-  const openNewTop25Modal = async () => {
-    setShowNewTop25(true);
-    try {
-      await AsyncStorage.setItem('pulse_last_new25', '[]');
-      queryClient.invalidateQueries({ queryKey: ['trending'] });
-    } catch {}
-  };
-
   const handleRefresh = async () => {
     try {
       await AsyncStorage.setItem('pulse_last_new25', '[]');
@@ -52,7 +44,7 @@ export default function Pulse() {
 
   useEffect(() => {
     if (params.new25 === '1') {
-      openNewTop25Modal();
+      setShowNewTop25(true);
       router.setParams({ new25: undefined });
     }
   }, [params.new25]);
@@ -95,7 +87,7 @@ export default function Pulse() {
         <PulseWordmark size={26} />
         <View style={s.headerIcons}>
           {freshCount > 0 && (
-            <Pressable onPress={openNewTop25Modal} hitSlop={8} style={s.flameBadgeBtn}>
+            <Pressable onPress={() => setShowNewTop25(true)} hitSlop={8} style={s.flameBadgeBtn}>
               <Ionicons name="flame" size={16} color={colors.accent} />
               <Text style={s.flameBadgeText}>{freshCount}</Text>
             </Pressable>
@@ -160,7 +152,16 @@ export default function Pulse() {
       />
 
       <NotifyModal visible={notify} onClose={() => setNotify(false)} />
-      <NewInTop25Modal visible={showNewTop25} onClose={() => setShowNewTop25(false)} />
+      <NewInTop25Modal
+        visible={showNewTop25}
+        onClose={async () => {
+          setShowNewTop25(false);
+          try {
+            await AsyncStorage.setItem('pulse_last_new25', '[]');
+            queryClient.invalidateQueries({ queryKey: ['trending'] });
+          } catch {}
+        }}
+      />
     </View>
   );
 }

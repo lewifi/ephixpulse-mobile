@@ -1,11 +1,24 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { AppState } from 'react-native';
 import * as Notifications from 'expo-notifications';
 import { router } from 'expo-router';
 import { QueryClient } from '@tanstack/react-query';
 
-export function useNotificationObserver(queryClient: QueryClient) {
+export function useNotificationObserver(queryClient: QueryClient, ready: boolean) {
   const handled = useRef<string | null>(null);
+  const [pendingUrl, setPendingUrl] = useState<string | null>(null);
+
+  // Safely execute routing only after app stack navigator is ready
+  useEffect(() => {
+    if (ready && pendingUrl) {
+      const timer = setTimeout(() => {
+        router.push(pendingUrl as any);
+        setPendingUrl(null);
+      }, 100);
+      return () => clearTimeout(timer);
+    }
+  }, [ready, pendingUrl]);
+
   useEffect(() => {
     let mounted = true;
     function route(response?: Notifications.NotificationResponse | null) {
@@ -20,7 +33,11 @@ export function useNotificationObserver(queryClient: QueryClient) {
         const id = response.notification.request.identifier ?? url;
         if (handled.current === id) return;
         handled.current = id;
-        router.push(url as any);
+        if (ready) {
+          router.push(url as any);
+        } else {
+          setPendingUrl(url);
+        }
       }
     }
     Notifications.getLastNotificationResponseAsync().then((r) => { if (mounted) route(r); });
@@ -30,5 +47,5 @@ export function useNotificationObserver(queryClient: QueryClient) {
       if (st === 'active') Notifications.setBadgeCountAsync(0).catch(() => {});
     });
     return () => { mounted = false; tapSub.remove(); appSub.remove(); };
-  }, [queryClient]);
+  }, [queryClient, ready]);
 }
