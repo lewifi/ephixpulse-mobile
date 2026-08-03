@@ -1,8 +1,8 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { View, Text, TextInput, Pressable, RefreshControl, StyleSheet } from 'react-native';
 import { FlashList } from '@shopify/flash-list';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { router } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useTrending } from '../../hooks/useTrending';
 import { TitleCard } from '../../components/TitleCard';
@@ -29,6 +29,15 @@ export default function Pulse() {
   const [menu, setMenu] = useState(false);
   const [notify, setNotify] = useState(false);
   const [showNewTop25, setShowNewTop25] = useState(false);
+
+  const params = useLocalSearchParams<{ new25?: string }>();
+
+  useEffect(() => {
+    if (params.new25 === '1') {
+      setShowNewTop25(true);
+      router.setParams({ new25: undefined });
+    }
+  }, [params.new25]);
 
   const freshCount = useMemo(() => {
     return (data?.released ?? []).filter((i: any) => i._isNew).length;

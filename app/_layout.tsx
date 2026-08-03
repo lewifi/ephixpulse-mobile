@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { Stack, usePathname } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
-import { QueryClient } from '@tanstack/react-query';
+import { QueryClient, focusManager } from '@tanstack/react-query';
 import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client';
 import { createAsyncStoragePersister } from '@tanstack/query-async-storage-persister';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -11,6 +11,7 @@ import * as SystemUI from 'expo-system-ui';
 import { useFonts } from 'expo-font';
 import { BebasNeue_400Regular } from '@expo-google-fonts/bebas-neue';
 import { DMSans_400Regular, DMSans_500Medium, DMSans_700Bold } from '@expo-google-fonts/dm-sans';
+import { AppState, Platform } from 'react-native';
 import { BootSplash } from '../components/BootSplash';
 import { prefetchTrending } from '../hooks/useTrending';
 import { colors } from '../theme/colors';
@@ -35,7 +36,7 @@ const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
       retry: 1,
-      refetchOnWindowFocus: false,
+      refetchOnWindowFocus: true,
       staleTime: 5 * 60 * 1000,         // 5 min "fresh" — then refetch in background
       gcTime: 24 * 60 * 60 * 1000,      // keep long enough to persist across launches
     },
@@ -51,6 +52,16 @@ const MIN_SPLASH_MS = 1800;
 export default function RootLayout() {
   useNotificationObserver();
   const pathname = usePathname();
+
+  useEffect(() => {
+    const subscription = AppState.addEventListener('change', (status) => {
+      if (Platform.OS !== 'web') {
+        focusManager.setFocused(status === 'active');
+      }
+    });
+    return () => subscription.remove();
+  }, []);
+
   useEffect(() => {
     logScreenView(pathname);
   }, [pathname]);
