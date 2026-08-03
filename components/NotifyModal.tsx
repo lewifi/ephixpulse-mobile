@@ -25,7 +25,7 @@ export function NotifyModal({ visible, onClose }: { visible: boolean; onClose: (
           <Text style={s.title}>New in the Top 25</Text>
           <Text style={s.body}>
             Get a heads-up the moment a fresh title breaks into the Top 25, so you never miss
-            what's suddenly blowing up.
+            what's suddenly glowing up.
           </Text>
 
           {status === 'enabled' ? (
