@@ -33,12 +33,39 @@ export default function Pulse() {
   const [notify, setNotify] = useState(false);
   const [showNewTop25, setShowNewTop25] = useState(false);
 
-  const params = useLocalSearchParams<{ new25?: string }>();
+  const [seenIds, setSeenIds] = useState<string[]>([]);
+
+  // Load seen IDs on mount
+  useEffect(() => {
+    (async () => {
+      try {
+        const val = await AsyncStorage.getItem('pulse_new25_seen');
+        if (val) setSeenIds(JSON.parse(val));
+      } catch {}
+    })();
+  }, []);
+
+  const lastNewIds = useMemo(() => {
+    return (data?.released ?? [])
+      .filter((i: any) => i._isNew)
+      .map((i: any) => `${mediaType(i)}_${i.id}`);
+  }, [data]);
+
+  const unseenCount = useMemo(() => {
+    return lastNewIds.filter((id) => !seenIds.includes(id)).length;
+  }, [lastNewIds, seenIds]);
+
+  const markAllAsSeen = async () => {
+    if (lastNewIds.length > 0) {
+      try {
+        await AsyncStorage.setItem('pulse_new25_seen', JSON.stringify(lastNewIds));
+        setSeenIds(lastNewIds);
+      } catch {}
+    }
+  };
 
   const handleRefresh = async () => {
-    try {
-      await AsyncStorage.setItem('pulse_last_new25', '[]');
-    } catch {}
+    await markAllAsSeen();
     refetch();
   };
 
@@ -86,10 +113,23 @@ export default function Pulse() {
       <View style={s.header}>
         <PulseWordmark size={26} />
         <View style={s.headerIcons}>
-          {freshCount > 0 && (
-            <Pressable onPress={() => setShowNewTop25(true)} hitSlop={8} style={s.flameBadgeBtn}>
-              <Ionicons name="flame" size={16} color={colors.accent} />
-              <Text style={s.flameBadgeText}>{freshCount}</Text>
+          {lastNewIds.length > 0 && (
+            <Pressable
+              onPress={() => setShowNewTop25(true)}
+              hitSlop={8}
+              style={[
+                s.flameBadgeBtn,
+                unseenCount > 0 ? s.flameBadgeBtnUnseen : s.flameBadgeBtnSeen
+              ]}
+            >
+              <Ionicons
+                name="flame"
+                size={16}
+                color={unseenCount > 0 ? colors.accent : colors.muted}
+              />
+              {unseenCount > 0 && (
+                <Text style={s.flameBadgeText}>{unseenCount}</Text>
+              )}
             </Pressable>
           )}
           <Pressable onPress={() => setNotify(true)} hitSlop={10} style={s.menuBtn}>
@@ -156,10 +196,7 @@ export default function Pulse() {
         visible={showNewTop25}
         onClose={async () => {
           setShowNewTop25(false);
-          try {
-            await AsyncStorage.setItem('pulse_last_new25', '[]');
-            queryClient.invalidateQueries({ queryKey: ['trending'] });
-          } catch {}
+          await markAllAsSeen();
         }}
       />
     </View>
@@ -171,7 +208,9 @@ const s = StyleSheet.create({
   header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingTop: 8, paddingBottom: 10 },
   headerIcons: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   menuBtn: { padding: 4 },
-  flameBadgeBtn: { flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: colors.accentSoft, borderColor: colors.accent, borderWidth: 1, paddingHorizontal: 8, paddingVertical: 3, borderRadius: 12, marginRight: 4 },
+  flameBadgeBtn: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 8, paddingVertical: 3, borderRadius: 12, marginRight: 4, borderWidth: 1 },
+  flameBadgeBtnUnseen: { backgroundColor: colors.accentSoft, borderColor: colors.accent },
+  flameBadgeBtnSeen: { backgroundColor: 'transparent', borderColor: colors.border },
   flameBadgeText: { color: colors.accent, fontFamily: fonts.bold, fontSize: 12 },
   searchWrap: { flexDirection: 'row', alignItems: 'center', gap: 8, marginHorizontal: 16, marginBottom: 10, paddingHorizontal: 12, height: 40, backgroundColor: colors.surface, borderColor: colors.border, borderWidth: 1 },
   search: { flex: 1, color: colors.text, fontFamily: fonts.body, fontSize: 14, paddingVertical: 0 },

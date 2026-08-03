@@ -7,6 +7,12 @@ import { QueryClient } from '@tanstack/react-query';
 export function useNotificationObserver(queryClient: QueryClient, ready: boolean) {
   const handled = useRef<string | null>(null);
   const [pendingUrl, setPendingUrl] = useState<string | null>(null);
+  const readyRef = useRef(ready);
+
+  // Sync ready state to ref to avoid re-triggering listener hook registers
+  useEffect(() => {
+    readyRef.current = ready;
+  }, [ready]);
 
   // Safely execute routing only after app stack navigator is ready
   useEffect(() => {
@@ -33,7 +39,7 @@ export function useNotificationObserver(queryClient: QueryClient, ready: boolean
         const id = response.notification.request.identifier ?? url;
         if (handled.current === id) return;
         handled.current = id;
-        if (ready) {
+        if (readyRef.current) {
           router.push(url as any);
         } else {
           setPendingUrl(url);
@@ -47,5 +53,5 @@ export function useNotificationObserver(queryClient: QueryClient, ready: boolean
       if (st === 'active') Notifications.setBadgeCountAsync(0).catch(() => {});
     });
     return () => { mounted = false; tapSub.remove(); appSub.remove(); };
-  }, [queryClient, ready]);
+  }, [queryClient]);
 }

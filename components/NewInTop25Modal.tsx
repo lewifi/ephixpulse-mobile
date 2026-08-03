@@ -16,8 +16,6 @@ export function NewInTop25Modal({ visible, onClose }: Props) {
   const { data } = useTrending();
   const fresh = (data?.released ?? []).filter((i: any) => i._isNew).slice(0, 12);
 
-  if (!visible) return null;
-
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
       <Pressable style={s.backdrop} onPress={onClose}>
