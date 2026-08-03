@@ -34,6 +34,7 @@ export default function Pulse() {
   const [showNewTop25, setShowNewTop25] = useState(false);
 
   const [seenIds, setSeenIds] = useState<string[]>([]);
+  const params = useLocalSearchParams<{ new25?: string }>();
 
   // Load seen IDs on mount
   useEffect(() => {
