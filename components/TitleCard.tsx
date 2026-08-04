@@ -22,7 +22,7 @@ function TitleCardBase({ item, rank }: { item: any; rank?: number }) {
 
   return (
     <Pressable style={s.card} onPress={open}>
-      <View style={s.posterWrap}>
+      <View style={[s.posterWrap, item._isNew && { borderWidth: 1.5, borderColor: colors.accent }]}>
         {poster ? (
           <Image source={poster} style={s.poster} contentFit="cover" transition={150} />
         ) : (
