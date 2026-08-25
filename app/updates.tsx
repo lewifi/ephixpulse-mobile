@@ -37,9 +37,6 @@ export default function Updates() {
         <View style={s.footer}>
           <PulseWordmark size={22} />
           <Text style={s.tag}>What the World is Watching · v{APP_VERSION}</Text>
-          <Pressable onPress={() => WebBrowser.openBrowserAsync('https://index.lewi.fi')} hitSlop={8}>
-            <Text style={s.credit}>Made by Lewi 2026 ↗</Text>
-          </Pressable>
         </View>
 
         <View style={s.attribution}>

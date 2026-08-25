@@ -82,9 +82,6 @@ export function ControlsMenu({ visible, media, sort, onClose, onMedia, onSort, o
             <Pressable onPress={onUpdates} hitSlop={6}>
               <Text style={s.footLink}>What's new · v{APP_VERSION}</Text>
             </Pressable>
-            <Pressable onPress={() => { WebBrowser.openBrowserAsync('https://index.lewi.fi'); onClose(); }} hitSlop={6}>
-              <Text style={s.footCredit}>Made by Lewi ↗</Text>
-            </Pressable>
           </View>
 
           <Pressable onPress={() => { WebBrowser.openBrowserAsync('https://ephix.net/privacy'); onClose(); }} hitSlop={6}>
